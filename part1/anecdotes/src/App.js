@@ -30,7 +30,7 @@ function App() {
     setVotes(votes.map((value, i) => (i === selected ? value + 1 : value)));
   };
 
-  const getAnecdoteWithMostVotes = () => {
+  const findMostVotesIndex = () => {
     let max = votes[0],
       index = 0;
 
@@ -41,7 +41,7 @@ function App() {
       }
     }
 
-    return anecdotes[index];
+    return index;
   };
 
   return (
@@ -56,7 +56,8 @@ function App() {
 
       <div>
         <h1>Anecdote with most votes</h1>
-        <p>{getAnecdoteWithMostVotes()}</p>
+        <p>{anecdotes[findMostVotesIndex()]}</p>
+        <p>has {votes[findMostVotesIndex()]}</p>
       </div>
     </>
   );
