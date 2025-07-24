@@ -5,12 +5,17 @@ import personService from "./services/persons";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
+import Notification from "./components/Notification";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [nameSearch, setNameSearch] = useState("");
   const [newName, setNewName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [notificationMessage, setNotificationMessage] = useState({
+    message: null,
+    isSuccess: true,
+  });
 
   useEffect(() => {
     personService.getAll().then((initialPersons) => {
@@ -27,8 +32,6 @@ const App = () => {
     };
 
     if (persons.some((person) => person.name === newName)) {
-      //alert(`${newName} is already added to phonebook`);
-
       const person = persons.find((p) => p.name === newName);
 
       if (
@@ -40,15 +43,22 @@ const App = () => {
 
         personService
           .update(person.id, personUpdated)
-          .then((returnedPerson) =>
+          .then((returnedPerson) => {
             setPersons(
               persons.map((p) =>
                 p.id !== personUpdated.id ? p : returnedPerson
               )
-            )
-          )
+            );
+            showNotificationMessage(
+              true,
+              `modified number of ${personUpdated.name}`
+            );
+          })
           .catch((error) => {
-            alert(`the person '${newName}' was already deleted from server`);
+            showNotificationMessage(
+              false,
+              `Information of ${personUpdated.name} has already been removed from server`
+            );
             setPersons(persons.filter((p) => p.id !== personUpdated.id));
           });
       }
@@ -58,6 +68,7 @@ const App = () => {
         setNewName("");
         setPhoneNumber("");
       });
+      showNotificationMessage(true, `added ${personObject.name}`);
     }
   };
 
@@ -65,10 +76,21 @@ const App = () => {
     const personToDeleted = persons.find((p) => p.id === id);
 
     if (window.confirm(`Delete ${personToDeleted.name}`)) {
-      personService
-        .deleteById(id)
-        .then(() => setPersons(persons.filter((p) => p.id !== id)));
+      personService.deleteById(id).then(() => {
+        setPersons(persons.filter((p) => p.id !== id));
+        showNotificationMessage(true, `deleted ${personToDeleted.name}`);
+      });
     }
+  };
+
+  const showNotificationMessage = (isSuccess, message) => {
+    setNotificationMessage({
+      message: message,
+      isSuccess: isSuccess,
+    });
+    setTimeout(() => {
+      setNotificationMessage({ message: null, isSuccess: null });
+    }, 5000);
   };
 
   const personsToShow = persons.filter((person) =>
@@ -78,6 +100,11 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+
+      <Notification
+        message={notificationMessage.message}
+        isSuccess={notificationMessage.isSuccess}
+      />
 
       <Filter nameSearch={nameSearch} setNameSearch={setNameSearch} />
 
