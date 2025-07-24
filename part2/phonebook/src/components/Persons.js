@@ -1,6 +1,6 @@
 import Person from "./Person";
 
-const Persons = ({ personsToShow }) => {
+const Persons = ({ personsToShow, handleDelete }) => {
   return (
     <div>
       {personsToShow.map((person) => (
@@ -8,6 +8,7 @@ const Persons = ({ personsToShow }) => {
           key={person.id}
           phoneNumber={person.number}
           name={person.name}
+          handleClick={() => handleDelete(person.id)}
         />
       ))}
     </div>
