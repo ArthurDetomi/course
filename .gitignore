@@ -3,3 +3,9 @@
 .note
 .env
 **/.env
+**/node_modules/
+package-lock.json
+**/package-lock.json
+part3/phonebook_bk/node_modules/.package-lock.json
+.gitignore
+**/.gitignore
