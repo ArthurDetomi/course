@@ -46,13 +46,15 @@ const App = () => {
           .then((returnedPerson) => {
             setPersons(
               persons.map((p) =>
-                p.id !== personUpdated.id ? p : returnedPerson
+                p.id !== returnedPerson.id ? p : returnedPerson
               )
             );
             showNotificationMessage(
               true,
               `modified number of ${personUpdated.name}`
             );
+            setNewName("");
+            setPhoneNumber("");
           })
           .catch((error) => {
             showNotificationMessage(
