@@ -7,8 +7,7 @@
 - [Parte 2](./part2/)
 - [Parte 3](./part3/)
 
-## Informações importantes:
+## Informações importantes Parte 3:
 
-### Exercise 3.9 and 3.10: Hosting link:
-
-[Link](https://phonebook-bk.fly.dev/)
+[Phonebook - APP deploy](https://phonebook-bk.fly.dev/)
+[NoteApp](https://examples-hidden-violet-8584.fly.dev/)
