@@ -10,14 +10,6 @@ function isNullOrEmpty(str) {
   );
 }
 
-function getRandomArbitrary(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
-const generateId = () => {
-  return getRandomArbitrary(1, Number.MAX_SAFE_INTEGER);
-};
-
 const express = require("express");
 const app = express();
 
