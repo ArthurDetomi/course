@@ -1,3 +1,7 @@
+require("dotenv").config();
+
+const Person = require("./models/person");
+
 let persons = [
   {
     id: 1,
@@ -63,7 +67,7 @@ app.listen(PORT, () => {
 });
 
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((persons) => response.json(persons));
 });
 
 app.get("/api/info", (request, response) => {
@@ -95,34 +99,31 @@ app.delete("/api/persons/:id", (request, response) => {
   response.status(204).end();
 });
 
-app.post("/api/persons", (req, res) => {
-  const body = req.body;
+app.post("/api/persons", (request, response) => {
+  const body = request.body;
 
   if (!body.name || !body.number) {
-    return res.status(400).json({
+    return response.status(400).json({
       error: "Number and name must be sent",
     });
   }
 
   if (isNullOrEmpty(body.name) || isNullOrEmpty(body.number)) {
-    return res.status(400).json({
+    return response.status(400).json({
       error: "Number and name cannot be empty",
     });
   }
 
   if (persons.some((p) => p.name === body.name)) {
-    return res.status(400).json({
+    return response.status(400).json({
       error: "name must be unique",
     });
   }
 
-  const person = {
-    id: generateId(),
+  const person = new Person({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  persons = persons.concat(person);
-
-  res.json(person);
+  person.save().then((savedPerson) => response.json(savedPerson));
 });

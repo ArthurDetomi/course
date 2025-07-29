@@ -1,2 +1,5 @@
+**/examples/
 **/**examples
 .note
+.env
+**/.env
