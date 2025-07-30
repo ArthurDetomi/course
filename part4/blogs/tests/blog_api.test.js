@@ -1,6 +1,5 @@
 const supertest = require("supertest");
 const mongoose = require("mongoose");
-
 const helper = require("./test_helper");
 const app = require("../app");
 const api = supertest(app);
@@ -9,17 +8,68 @@ const Blog = require("../models/blog");
 
 beforeEach(async () => {
   await Blog.deleteMany({});
-
-  const blogObjects = helper.initialBlogs.map((blog) => new Blog(blog));
-  const promisseArray = blogObjects.map((blog) => blog.save());
-  await Promise.all(promisseArray);
+  await Blog.insertMany(helper.initialBlogs);
 });
 
-test("all blogs are returned", async () => {
-  const response = await api.get("/api/blogs");
+describe("when there is initially some blogs saved", () => {
+  test("all blogs are returned", async () => {
+    const response = await api.get("/api/blogs");
 
-  expect(response.body).toHaveLength(helper.initialBlogs.length);
-}, 100000);
+    expect(response.body).toHaveLength(helper.initialBlogs.length);
+  }, 100000);
+});
+
+describe("addition of a new blog", () => {
+  test("a valid blog can be added", async () => {
+    const newBlog = {
+      title: "async/await simplifies making async calls",
+      author: "Arthur D",
+      url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
+      likes: 12,
+    };
+
+    await api
+      .post("/api/blogs")
+      .send(newBlog)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
+
+    const titles = blogsAtEnd.map((b) => b.title);
+    expect(titles).toContain("async/await simplifies making async calls");
+  }, 100000);
+
+  test("The likes property must be set to 0 if not sent", async () => {
+    const newBlog = {
+      title: "async/await simplifies making async calls",
+      author: "Arthur D",
+      url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
+    };
+
+    const blogSaved = await api
+      .post("/api/blogs")
+      .send(newBlog)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
+
+    expect(blogSaved.body.likes).toBeDefined();
+  }, 100000);
+
+  test("blog without url or title is not added", async () => {
+    const newBlog = {
+      author: "Arthur D",
+      likes: 13,
+    };
+
+    await api.post("/api/blogs").send(newBlog).expect(400);
+
+    const blogsAtEnd = await helper.blogsInDb();
+
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+  }, 100000);
+});
 
 test("blogs have id property with 'id'", async () => {
   const response = await api.get("/api/blogs");
@@ -29,55 +79,43 @@ test("blogs have id property with 'id'", async () => {
   expect(blogs[0].id).toBeDefined();
 }, 100000);
 
-test("a valid blog can be added", async () => {
-  const newBlog = {
-    title: "async/await simplifies making async calls",
-    author: "Arthur D",
-    url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
-    likes: 12,
-  };
+describe("deletion of a blog", () => {
+  test("succeeds with status code 204 if id is valid", async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToDelete = blogsAtStart[0];
 
-  await api
-    .post("/api/blogs")
-    .send(newBlog)
-    .expect(201)
-    .expect("Content-Type", /application\/json/);
+    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
 
-  const blogsAtEnd = await helper.blogsInDb();
-  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
+    const blogsAtEnd = await helper.blogsInDb();
 
-  const titles = blogsAtEnd.map((b) => b.title);
-  expect(titles).toContain("async/await simplifies making async calls");
-}, 100000);
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1);
 
-test("The likes property must be set to 0 if not sent", async () => {
-  const newBlog = {
-    title: "async/await simplifies making async calls",
-    author: "Arthur D",
-    url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
-  };
+    const titles = blogsAtEnd.map((b) => b.title);
 
-  const blogSaved = await api
-    .post("/api/blogs")
-    .send(newBlog)
-    .expect(201)
-    .expect("Content-Type", /application\/json/);
+    expect(titles).not.toContain(blogToDelete.title);
+  });
+});
 
-  expect(blogSaved.body.likes).toBeDefined();
-}, 100000);
+describe("update of a blog", () => {
+  test("information of blog must be updated", async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToUpdated = blogsAtStart[0];
 
-test("blog without url or title is not added", async () => {
-  const newBlog = {
-    author: "Arthur D",
-    likes: 13,
-  };
+    const blogUpdated = await api
+      .put(`/api/blogs/${blogToUpdated.id}`)
+      .send({ likes: 23 })
+      .expect(200);
 
-  await api.post("/api/blogs").send(newBlog).expect(400);
+    expect(blogUpdated.body.likes).toBe(23);
+    expect(blogUpdated.body.id).toBe(blogToUpdated.id);
 
-  const blogsAtEnd = await helper.blogsInDb();
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
 
-  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
-}, 100000);
+    const updatedBlog = blogsAtEnd.find((b) => b.id === blogToUpdated.id);
+    expect(updatedBlog.likes).toBe(23);
+  });
+});
 
 afterAll(async () => {
   await mongoose.connection.close();
