@@ -48,7 +48,7 @@ test("a valid blog can be added", async () => {
 
   const titles = blogsAtEnd.map((b) => b.title);
   expect(titles).toContain("async/await simplifies making async calls");
-});
+}, 100000);
 
 test("The likes property must be set to 0 if not sent", async () => {
   const newBlog = {
@@ -64,7 +64,20 @@ test("The likes property must be set to 0 if not sent", async () => {
     .expect("Content-Type", /application\/json/);
 
   expect(blogSaved.body.likes).toBeDefined();
-});
+}, 100000);
+
+test("blog without url or title is not added", async () => {
+  const newBlog = {
+    author: "Arthur D",
+    likes: 13,
+  };
+
+  await api.post("/api/blogs").send(newBlog).expect(400);
+
+  const blogsAtEnd = await helper.blogsInDb();
+
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+}, 100000);
 
 afterAll(async () => {
   await mongoose.connection.close();
