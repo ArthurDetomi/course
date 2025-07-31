@@ -45,11 +45,16 @@ blogsRouter.delete("/:id", async (request, response) => {
 
   const blog = await Blog.findById(request.params.id);
 
-  if (blog.user.toString() !== decodedToken.id.toString()) {
+  const user = await User.findById(decodedToken.id);
+
+  if (blog.user.toString() !== user.id.toString()) {
     response.status(401).json({
       error: "user not authorized to perform this action",
     });
   }
+
+  user.blogs = user.blogs((b) => b.id !== blog.id);
+  await user.save();
 
   await blog.deleteOne();
 
