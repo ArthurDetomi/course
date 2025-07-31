@@ -5,10 +5,14 @@ const app = require("../app");
 const api = supertest(app);
 
 const Blog = require("../models/blog");
+const User = require("../models/user");
 
 beforeEach(async () => {
   await Blog.deleteMany({});
   await Blog.insertMany(helper.initialBlogs);
+
+  await User.deleteMany({});
+  await User.insertMany(helper.initialUsers);
 });
 
 describe("when there is initially some blogs saved", () => {
@@ -115,6 +119,63 @@ describe("update of a blog", () => {
     const updatedBlog = blogsAtEnd.find((b) => b.id === blogToUpdated.id);
     expect(updatedBlog.likes).toBe(23);
   });
+});
+
+// Users Test
+describe("addition of a new user", () => {
+  test("a valid user can be added", async () => {
+    const newUser = {
+      name: "User",
+      username: "usertest",
+      password: "12345678",
+    };
+
+    await api
+      .post("/api/users")
+      .send(newUser)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
+
+    const usersAtEnd = await helper.usersInDb();
+    expect(usersAtEnd).toHaveLength(helper.initialUsers.length + 1);
+
+    const usernames = usersAtEnd.map((u) => u.username);
+    expect(usernames).toContain(newUser.username);
+  }, 100000);
+
+  test("password user must have length greater than 3", async () => {
+    const newUser = {
+      name: "User",
+      username: "usertest",
+      password: "12",
+    };
+
+    await api
+      .post("/api/users")
+      .send(newUser)
+      .expect(400)
+      .expect("Content-Type", /application\/json/);
+
+    const usersAtEnd = await helper.usersInDb();
+    expect(usersAtEnd).toHaveLength(helper.initialUsers.length);
+  }, 100000);
+
+  test("username must be unique", async () => {
+    const newUser = {
+      username: helper.initialUsers[0].username,
+      name: "Lucas",
+      password: "matias",
+    };
+
+    await api
+      .post("/api/users")
+      .send(newUser)
+      .expect(400)
+      .expect("Content-Type", /application\/json/);
+
+    const usersAtEnd = await helper.usersInDb();
+    expect(usersAtEnd).toHaveLength(helper.initialUsers.length);
+  }, 100000);
 });
 
 afterAll(async () => {
