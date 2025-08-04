@@ -71,7 +71,14 @@ const App = () => {
 
       blogFormRef.current.toggleVisibility();
 
-      setBlogs(blogs.concat(blogCreated));
+      setBlogs(
+        blogs.concat({
+          ...blogCreated,
+          user: {
+            name: user.name,
+          },
+        })
+      );
       sendNotificationMessage(
         `a new blog ${blogCreated.title} by ${blogCreated.author} added`,
         true
