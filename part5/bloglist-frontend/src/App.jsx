@@ -79,12 +79,32 @@ const App = () => {
           },
         })
       );
+
       sendNotificationMessage(
         `a new blog ${blogCreated.title} by ${blogCreated.author} added`,
         true
       );
     } catch (exception) {
       sendNotificationMessage(`${exception.response.data.error}`, false);
+    }
+  };
+
+  const likeBlog = async (id) => {
+    try {
+      const blog = blogs.find((b) => b.id === id);
+      const blogUpdated = await blogService.update(id, {
+        ...blog,
+        likes: blog.likes ? blog.likes + 1 : 1,
+      });
+
+      setBlogs(blogs.map((b) => (b.id === id ? blogUpdated : b)));
+
+      sendNotificationMessage(
+        `like blog ${blogUpdated.title} by ${blogUpdated.author} successfully!`,
+        true
+      );
+    } catch (exception) {
+      sendNotificationMessage("error to like blog", false);
     }
   };
 
@@ -144,7 +164,7 @@ const App = () => {
       </div>
 
       {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} />
+        <Blog key={blog.id} blog={blog} likeBlog={likeBlog} />
       ))}
     </div>
   );
