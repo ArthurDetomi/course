@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
+
 import Blog from "./components/Blog";
+import Notification from "./components/Notification";
 
 import blogService from "./services/blogs";
 import loginService from "./services/login";
+
+import "./index.css";
 
 const App = () => {
   const [blogs, setBlogs] = useState([]);
@@ -14,6 +18,7 @@ const App = () => {
     url: "",
     author: "",
   });
+  const [notificationMessage, setNotificationMessage] = useState(null);
 
   useEffect(() => {
     blogService.getAll().then((blogs) => setBlogs(blogs));
@@ -28,6 +33,16 @@ const App = () => {
     }
   }, []);
 
+  const sendNotificationMessage = (message, isSuccess) => {
+    setNotificationMessage({
+      message: message,
+      isSuccess: isSuccess,
+    });
+    setTimeout(() => {
+      setNotificationMessage(null);
+    }, 5000);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -39,14 +54,16 @@ const App = () => {
       blogService.setToken(user.token);
       setUsername("");
       setPassword("");
+      sendNotificationMessage("logged with successfully!", true);
     } catch (exception) {
-      alert("Wrong credentials");
+      sendNotificationMessage("wrong username or password", false);
     }
   };
 
   const handleLogout = () => {
     window.localStorage.removeItem("loggedNoteappUser");
     setUser(null);
+    sendNotificationMessage("logged out sucessfully!", true);
   };
 
   const handleAddBlog = async (event) => {
@@ -62,9 +79,12 @@ const App = () => {
         author: "",
         url: "",
       });
-      alert("Novo blog cadastrado com sucesso!");
+      sendNotificationMessage(
+        `a new blog ${blogCreated.title} by ${blogCreated.author} added`,
+        true
+      );
     } catch (exception) {
-      alert(exception.response.data.error);
+      sendNotificationMessage(`${exception.response.data.error}`, false);
     }
   };
 
@@ -98,6 +118,8 @@ const App = () => {
 
           <button type="submit">login</button>
         </form>
+
+        <Notification data={notificationMessage} />
       </div>
     );
   }
@@ -114,6 +136,9 @@ const App = () => {
 
       <div>
         <h2>Create new</h2>
+
+        <Notification data={notificationMessage} />
+
         <form onSubmit={handleAddBlog}>
           <div>
             title
@@ -140,6 +165,7 @@ const App = () => {
                   author: target.value,
                 })
               }
+              required={true}
             />
           </div>
           <div>
