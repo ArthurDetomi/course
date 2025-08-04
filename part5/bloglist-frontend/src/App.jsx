@@ -20,7 +20,7 @@ const App = () => {
   const blogFormRef = useRef();
 
   useEffect(() => {
-    blogService.getAll().then((blogs) => setBlogs(blogs));
+    blogService.getAll().then((blogs) => setBlogs(sortByLikes(blogs)));
   }, []);
 
   useEffect(() => {
@@ -72,12 +72,14 @@ const App = () => {
       blogFormRef.current.toggleVisibility();
 
       setBlogs(
-        blogs.concat({
-          ...blogCreated,
-          user: {
-            name: user.name,
-          },
-        })
+        sortByLikes(
+          blogs.concat({
+            ...blogCreated,
+            user: {
+              name: user.name,
+            },
+          })
+        )
       );
 
       sendNotificationMessage(
@@ -97,7 +99,7 @@ const App = () => {
         likes: blog.likes ? blog.likes + 1 : 1,
       });
 
-      setBlogs(blogs.map((b) => (b.id === id ? blogUpdated : b)));
+      setBlogs(sortByLikes(blogs.map((b) => (b.id === id ? blogUpdated : b))));
 
       sendNotificationMessage(
         `like blog ${blogUpdated.title} by ${blogUpdated.author} successfully!`,
@@ -107,6 +109,30 @@ const App = () => {
       sendNotificationMessage("error to like blog", false);
     }
   };
+
+  const deleteBlog = async (id) => {
+    try {
+      const blog = blogs.find((b) => b.id === id);
+
+      if (window.confirm(`Remove blog ${blog.title} by ${blog.author}`)) {
+        await blogService.deleteById(id);
+
+        setBlogs(sortByLikes(blogs.filter((b) => b.id !== id)));
+
+        sendNotificationMessage(
+          `blog ${blog.title} by ${blog.author} deleted successfully!`,
+          true
+        );
+      }
+    } catch (exception) {
+      sendNotificationMessage(
+        `You don't have permission to remove this blog!`,
+        false
+      );
+    }
+  };
+
+  const sortByLikes = (blogs) => [...blogs].sort((a, b) => b.likes - a.likes);
 
   if (user === null) {
     return (
@@ -164,7 +190,12 @@ const App = () => {
       </div>
 
       {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} likeBlog={likeBlog} />
+        <Blog
+          key={blog.id}
+          blog={blog}
+          likeBlog={likeBlog}
+          deleteBlog={deleteBlog}
+        />
       ))}
     </div>
   );
