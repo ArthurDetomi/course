@@ -4,15 +4,55 @@ import Notification from "./components/Notification";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { getAnecdotes, createAnecdote, updateAnecdote } from "./requests";
+import { useReducer } from "react";
+
+const notificationReducer = (state, action) => {
+  switch (action.type) {
+    case "SET":
+      return action.message;
+    case "CLEAR":
+      return "";
+    default:
+      return state;
+  }
+};
 
 const App = () => {
   const queryClient = useQueryClient();
+
+  const [notificationMessage, notificationDispatch] = useReducer(
+    notificationReducer,
+    ""
+  );
 
   const newAnecdoteMutation = useMutation({
     mutationFn: createAnecdote,
     onSuccess: (newAnecdote) => {
       const anecdotes = queryClient.getQueryData(["anecdotes"]);
       queryClient.setQueryData(["anecdotes"], anecdotes.concat(newAnecdote));
+
+      notificationDispatch({
+        type: "SET",
+        message: `anecdote '${newAnecdote.content} created'`,
+      });
+      setTimeout(() => {
+        notificationDispatch({
+          type: "CLEAR",
+        });
+      }, 5000);
+    },
+    onError: (error) => {
+      if (error.response.status === 400) {
+        notificationDispatch({
+          type: "SET",
+          message: "too short anecdote, must have length 5 or more",
+        });
+        setTimeout(() => {
+          notificationDispatch({
+            type: "CLEAR",
+          });
+        }, 5000);
+      }
     },
   });
 
@@ -26,6 +66,16 @@ const App = () => {
           a.id === updatedAnecdote.id ? updatedAnecdote : a
         )
       );
+
+      notificationDispatch({
+        type: "SET",
+        message: `anecdote '${updatedAnecdote.content} voted'`,
+      });
+      setTimeout(() => {
+        notificationDispatch({
+          type: "CLEAR",
+        });
+      }, 5000);
     },
   });
 
@@ -58,7 +108,7 @@ const App = () => {
     <div>
       <h3>Anecdote app</h3>
 
-      <Notification />
+      <Notification message={notificationMessage} />
       <AnecdoteForm addAnecdote={addAnecdote} />
 
       {anecdotes.map((anecdote) => (
