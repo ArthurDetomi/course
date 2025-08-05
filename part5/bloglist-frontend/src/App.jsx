@@ -117,7 +117,7 @@ const App = () => {
       if (window.confirm(`Remove blog ${blog.title} by ${blog.author}`)) {
         await blogService.deleteById(id);
 
-        setBlogs(sortByLikes(blogs.filter((b) => b.id !== id)));
+        setBlogs(blogs.filter((b) => b.id !== id));
 
         sendNotificationMessage(
           `blog ${blog.title} by ${blog.author} deleted successfully!`,
