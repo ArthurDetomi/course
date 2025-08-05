@@ -89,9 +89,9 @@ const Footer = () => (
 );
 
 const CreateNew = (props) => {
-  const content = useField("");
-  const author = useField("");
-  const info = useField("");
+  const [content, contentReset] = useField("");
+  const [author, authorReset] = useField("");
+  const [info, infoReset] = useField("");
 
   const navigate = useNavigate();
 
@@ -112,9 +112,9 @@ const CreateNew = (props) => {
   };
 
   const handleClickResetButton = () => {
-    content.reset();
-    author.reset();
-    info.reset();
+    contentReset();
+    authorReset();
+    infoReset();
   };
 
   return (
